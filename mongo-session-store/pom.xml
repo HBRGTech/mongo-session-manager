@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.hbr</groupId>
+		<artifactId>mongo-session-manager</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>	
+	<artifactId>mongo-session-store</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>mongo-session-store</name>
+	<url>http://github.com/HBRGTech/mongo-session-manager/mongo-session-store</url>
+	<description>Tomcat Persistence Session Manager backed by MongoDB.</description>
+	<scm>
+		<connection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-store.git</connection>
+		<developerConnection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-store.git</developerConnection>
+		<url>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-manager.git</url>
+	</scm>
+	<issueManagement>
+		<url>https://github.com/HBRGTech/mongo-session-manager/issues</url>
+		<system>HBRGTech GitHub Issues</system>
+	</issueManagement>
+	<organization>
+		<name>Harvard Business Review</name>
+		<url>http://hbr.org</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>Apache 2</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<repositories>
+		<repository>
+			<id>maven-central</id>
+			<name>Maven Central Repository</name>
+			<url>http://repo1.maven.org/maven2</url>
+		</repository>
+	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-catalina</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-util</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongo-java-driver</artifactId>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

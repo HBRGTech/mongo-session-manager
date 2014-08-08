@@ -3,7 +3,11 @@
  */
 package org.hbr.session.store;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,11 +16,14 @@ import org.apache.catalina.Container;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Session;
 import org.apache.catalina.Store;
+import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.StoreBase;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
@@ -28,7 +35,7 @@ import com.mongodb.WriteConcern;
 /**
  * Tomcat {@link Store} implementation backed by MongoDB.
  * 
- * @author kdavis
+ * @author Kevin Davis kdavis@hbr.org
  *
  */
 public class MongoStore extends StoreBase {
@@ -36,7 +43,22 @@ public class MongoStore extends StoreBase {
 	/**
 	 * Property used to store the Session's last modified date.
 	 */
+	protected static final String appContextProperty = "app";
+	
+	/**
+	 * Property used to store the Session's last modified date.
+	 */
 	protected static final String lastModifiedProperty = "lastModified";
+	
+	/**
+	 * Property used to store the Session's creation date.
+	 */
+	protected static final String creationTimeProperty = "creationTime";
+	
+	/**
+	 * Property used to store the Session's data.
+	 */
+	protected static final String sessionDataProperty = "data";
 	
 	/**
 	 * Default Name of the Collection where the Sessions will be stored. 
@@ -147,6 +169,12 @@ public class MongoStore extends StoreBase {
      * Defaults to "SAFE"
      */
     protected WriteConcern writeConcern = WriteConcern.SAFE;
+    
+    /**
+     * Controls how long the sessions live in the DB.  
+     * Defaults to -1 or forever
+     */
+    protected int dbSessionTimeToLive = -1;
 	
     /**
      * {@link MongoClient} instance to use.
@@ -206,8 +234,9 @@ public class MongoStore extends StoreBase {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public int getSize() throws IOException {
-		Long count = this.collection.count();
+	public int getSize() throws IOException {		
+		/* count the items in this collection for this app */
+		Long count = this.collection.count(new BasicDBObject(appContextProperty, this.getName()));
 		return count.intValue();
 	}
 
@@ -216,8 +245,22 @@ public class MongoStore extends StoreBase {
 	 */
 	@Override
 	public String[] keys() throws IOException {
-		/* select all the ids from the collection */
-		return null;
+		/* create the empty array list */
+		List<String> keys = new ArrayList<String>();
+		
+		/* build the query */
+		BasicDBObject sessionKeyQuery = new BasicDBObject();
+		sessionKeyQuery.put(appContextProperty, this.getName());
+		
+		/* get the list */
+		DBCursor mongoSessionKeys = this.collection.find(sessionKeyQuery, new BasicDBObject("_id", 1));
+		while(mongoSessionKeys.hasNext()) {
+			String id = mongoSessionKeys.next().get("_id").toString();
+			keys.add(id);
+		}
+		
+		/* return the array */
+		return keys.toArray(new String[keys.size()]);
 	}
 
 	/**
@@ -225,10 +268,50 @@ public class MongoStore extends StoreBase {
 	 */
 	@Override
 	public Session load(String id) throws ClassNotFoundException, IOException {
-		/* locate the session, by id, in the collection */
+		/* default session */
+		StandardSession session = null;
 		
-		/* serialize into a session */
-		return null;
+		/* locate the session, by id, in the collection */
+		BasicDBObject sessionQuery = new BasicDBObject();
+		sessionQuery.put("_id", id);
+		sessionQuery.put(appContextProperty, this.getName());
+		
+		/* lookup the session */
+		DBObject mongoSession = this.collection.findOne(sessionQuery);
+		if (mongoSession != null) {
+			/* get the properties from mongo */			
+			byte[] data = (byte[])mongoSession.get(sessionDataProperty);
+			
+			if (data != null) {
+				ByteArrayInputStream bis = null;
+				ObjectInputStream ois = null;
+				try {
+					/* load the data into an input stream */
+					bis = new ByteArrayInputStream(data);
+					ois = new ObjectInputStream(bis);
+					
+					/* create a new session */
+					session = (StandardSession)this.manager.createEmptySession();
+					session.readObjectData(ois);
+				} finally {
+					if (ois != null) {
+						try {
+							ois.close();
+							ois = null;
+						} catch (Exception e) {}
+					}
+					if (bis != null) {
+						try {
+							bis.close();
+							bis = null;
+						} catch (Exception e) {}
+					}
+				}
+			}
+		}
+		
+		/* return the session */
+		return session;
 	}
 
 	/**
@@ -236,7 +319,20 @@ public class MongoStore extends StoreBase {
 	 */
 	@Override
 	public void remove(String id) throws IOException {
-		/* remove the session from the collection, by id */
+		/* build up the query, looking for all sessions with this app context property and id */
+		BasicDBObject sessionQuery = new BasicDBObject();
+		sessionQuery.put("_id", id);
+		sessionQuery.put(appContextProperty, this.getName());
+		
+		/* remove all sessions for this context and id */
+		try {
+			this.collection.remove(sessionQuery);
+		} catch (MongoException e) {
+			/* for some reason we couldn't remove the data */
+			this.manager.getContainer().getLogger().fatal(
+					"Unable to remove sessions for [" + id + ":" + this.getName() + "] from MongoDB", e);
+			throw e;
+		}
 	}
 
 	/**
@@ -244,8 +340,18 @@ public class MongoStore extends StoreBase {
 	 */
 	@Override
 	public void clear() throws IOException {
+		/* build up the query, looking for all sessions with this app context property */
+		BasicDBObject sessionQuery = new BasicDBObject();
+		sessionQuery.put(appContextProperty, this.getName());
+		
 		/* remove all sessions for this context */
-
+		try {
+			this.collection.remove(sessionQuery);
+		} catch (MongoException e) {
+			/* for some reason we couldn't save the data */
+			this.manager.getContainer().getLogger().fatal("Unable to remove sessions for [" + this.getName() + "] from MongoDB", e);
+			throw e;
+		}
 	}
 
 	/**
@@ -253,7 +359,50 @@ public class MongoStore extends StoreBase {
 	 */
 	@Override
 	public void save(Session session) throws IOException {
-		/* save the session into the collection */
+		/* we will store the session data as a byte array in Mongo, so
+		 * we need to set up our output streams
+		 */
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream(bos);
+		
+		/* serialize the session using the object output stream */		
+		((StandardSession)session).writeObjectData(oos);
+		
+		/* get the byte array of the data */
+		byte[] data = bos.toByteArray();
+		
+		/* create the DBObject */
+		BasicDBObject mongoSession = new BasicDBObject();
+		mongoSession.put("_id", session.getId());
+		mongoSession.put(appContextProperty, this.getName());
+		mongoSession.put(creationTimeProperty, session.getCreationTime());
+		mongoSession.put(sessionDataProperty, data);
+		mongoSession.put(lastModifiedProperty, System.currentTimeMillis());
+		
+		/* create our upsert lookup */
+		BasicDBObject sessionQuery = new BasicDBObject();
+		sessionQuery.put("_id", session.getId());
+		try {
+			/* update the object in the collection, inserting if necessary */
+			this.collection.update(sessionQuery, mongoSession, true, false);
+		} catch (MongoException e) {
+			/* for some reason we couldn't save the data */
+			this.manager.getContainer().getLogger().fatal("Unable to save session to MongoDB", e);
+			throw e;
+		} finally {
+			if (oos != null) {
+				try {
+					oos.close();
+					oos = null;
+				} catch (Exception e) {}
+			}
+			if (bos != null) {
+				try {
+					bos.close();
+					bos = null;
+				} catch (Exception e) {}
+			}
+		}
 	}
 
 	/**
@@ -350,8 +499,23 @@ public class MongoStore extends StoreBase {
 			/* get a reference to the collection */
 			this.collection = this.db.getCollection(this.dbCollectionName);
 			
-			/* make sure the last modified index exists */
+			/* drop any existing indexes */
+			this.collection.dropIndex(new BasicDBObject(lastModifiedProperty, 1));
+			this.collection.dropIndex(new BasicDBObject(appContextProperty, 1));
+			
+			/* make sure the last modified and app name indexes exists */
 			this.collection.ensureIndex(new BasicDBObject(lastModifiedProperty, 1));
+			
+			/* determine if we need to expire our db sessions */
+			if (this.dbSessionTimeToLive != -1) {
+				/* create a ttl index on the app property */
+				this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1), 
+						new BasicDBObject("expireAfterSeconds", this.dbSessionTimeToLive));	
+			} else {
+				/* create a regular index */
+				this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1));
+			}
+			
 		} catch (UnknownHostException uhe) {
 			this.manager.getContainer().getLogger().error("Unable to Connect to MongoDB", uhe);
 			throw new LifecycleException(uhe);
@@ -586,5 +750,21 @@ public class MongoStore extends StoreBase {
 		if (concern != null) {
 			this.writeConcern = concern;
 		}
+	}
+
+
+	/**
+	 * @return the dbSessionTimeToLive
+	 */
+	public int getDbSessionTimeToLive() {
+		return dbSessionTimeToLive;
+	}
+
+
+	/**
+	 * @param dbSessionTimeToLive the dbSessionTimeToLive to set
+	 */
+	public void setDbSessionTimeToLive(int dbSessionTimeToLive) {
+		this.dbSessionTimeToLive = dbSessionTimeToLive;
 	}
 }
