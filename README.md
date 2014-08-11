@@ -3,7 +3,7 @@ Tomcat MongoDB Persistent Session Manager
 
 # Overview
 
-This is an Apache Tomcat Persistent Session Manager implementation backed by MongoDB.  This works borrows heavily from the concepts laid out in the [Mongo-Tomcat-Sessions project by David Dawson](https://github.com/naviance/Mongo-Tomcat-Sessions) and applies them using Tomcat's `org.apache.catalina.session.PersistencManager` and `org.apache.catalina.Store` interfaces.
+This is an Apache Tomcat Persistent Session Manager implementation backed by MongoDB.  This work borrows heavily from the concepts laid out in the [Mongo-Tomcat-Sessions project by David Dawson](https://github.com/naviance/Mongo-Tomcat-Sessions) and applies them using Tomcat's `org.apache.catalina.session.PersistencManager` and `org.apache.catalina.Store` interfaces.
 
 ## Quick Start
 
@@ -30,13 +30,13 @@ Session Manager's are configured in Tomcat's `server.xml` or an application's `c
 ```
 
 Manager Properties.
-For more information regarding the MongoDB specific properties, please see the [MongoDB Documentation](http://docs.mongodb.org/manual/reference/connection-string/).  *bold* properties are required.
+For more information regarding the MongoDB specific properties, please see the [MongoDB Documentation](http://docs.mongodb.org/manual/reference/connection-string/).  **bold** properties are required.
 
  Attribute | Description |
  --------- | ----------- |
  connectionUri | A MongoDB Connection String.  If present, this will override all other connection options
- *hosts* | A comma separated list of MongoDB hosts and ports in `host:port` syntax 
- *dbName* | MongoDB Database name to use 
+ **hosts** | A comma separated list of MongoDB hosts and ports in `host:port` syntax 
+ **dbName** | MongoDB Database name to use 
  collectionName | Name of the Collection to use.  Defaults to **tomcat.sessions** 
  username | If MongoDB is operating in Secure Mode, the username to authenticate with 
  password | If MongoDB is operating in Secure Mode, the password to authenticate with 
