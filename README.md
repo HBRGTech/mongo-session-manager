@@ -32,6 +32,7 @@ Session Manager's are configured in Tomcat's `server.xml` or an application's `c
 Manager Properties.
 For more information regarding the MongoDB specific properties, please see the [MongoDB Documentation](http://docs.mongodb.org/manual/reference/connection-string/).  *bold* properties are required.
 | Attribute | Description |
+| --------- | ----------- |
 | connectionUri | A MongoDB Connection String.  If present, this will override all other connection options|
 | *hosts* | A comma separated list of MongoDB hosts and ports in `host:port` syntax |
 | *dbName* | MongoDB Database name to use |
