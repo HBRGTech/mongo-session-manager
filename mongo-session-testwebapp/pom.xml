@@ -14,6 +14,25 @@
 	<properties>
 		<spring.version>4.0.6.RELEASE</spring.version>
 	</properties>
+		<scm>
+		<connection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-testwebapp.git</connection>
+		<developerConnection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-testwebapp.git</developerConnection>
+		<url>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-testwebapp.git</url>
+	</scm>
+	<issueManagement>
+		<url>https://github.com/HBRGTech/mongo-session-manager/issues</url>
+		<system>HBRGTech GitHub Issues</system>
+	</issueManagement>
+	<organization>
+		<name>Harvard Business Review</name>
+		<url>http://hbr.org</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>Apache 2</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>	
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -164,4 +183,12 @@
 			</plugin>			
 		</plugins>
 	</build>
+	<distributionManagement>
+		<repository>
+			<id>internal.repo</id>
+			<name>Temporary Staging Repository</name>
+			<url>file://${project.build.directory}/mvn-repo</url>
+		</repository>
+	</distributionManagement>
+	<url>https://github.com/HBRGTech/mongo-session-manager/tree/master/mongo-session-testwebapp</url>
 </project>

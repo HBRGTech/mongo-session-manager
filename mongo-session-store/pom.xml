@@ -10,8 +10,8 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>mongo-session-store</name>
-	<url>http://github.com/HBRGTech/mongo-session-manager/mongo-session-store</url>
+	<name>MongoDB Session Manager Store</name>
+	<url>https://github.com/HBRGTech/mongo-session-manager/tree/master/mongo-session-store</url>
 	<description>Tomcat Persistence Session Manager backed by MongoDB.</description>
 	<scm>
 		<connection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-store.git</connection>
@@ -97,4 +97,11 @@
 			</plugin>
 		</plugins>
 	</build>
+	<distributionManagement>
+		<repository>
+			<id>internal.repo</id>
+			<name>Temporary Staging Repository</name>
+			<url>file://${project.build.directory}/mvn-repo</url>
+		</repository>
+	</distributionManagement>
 </project>
