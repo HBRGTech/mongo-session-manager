@@ -1,13 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.hbr</groupId>
 		<artifactId>mongo-session-manager</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.2-SNAPSHOT</version>
 	</parent>
 	<artifactId>mongo-session-store</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>MongoDB Session Manager Store</name>
@@ -17,7 +16,8 @@
 		<connection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-store.git</connection>
 		<developerConnection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-store.git</developerConnection>
 		<url>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-manager.git</url>
-	</scm>
+	  <tag>HEAD</tag>
+  </scm>
 	<issueManagement>
 		<url>https://github.com/HBRGTech/mongo-session-manager/issues</url>
 		<system>HBRGTech GitHub Issues</system>
