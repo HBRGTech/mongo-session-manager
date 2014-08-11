@@ -29,7 +29,8 @@ Session Manager's are configured in Tomcat's `server.xml` or an application's `c
 </Manager>
 ```
 
-Manager Properties.
+#### Manager Properties.
+
 For more information regarding the MongoDB specific properties, please see the [MongoDB Documentation](http://docs.mongodb.org/manual/reference/connection-string/).  **bold** properties are required.
 
  Attribute | Description |
