@@ -1,5 +1,17 @@
 /**
+ * Copyright 2014 Harvard Business Publishing
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  * 
+ * 		http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and 
+ * limitations under the License.
  */
 package org.hbr.session.store;
 
@@ -35,7 +47,7 @@ import com.mongodb.WriteConcern;
 /**
  * Tomcat {@link Store} implementation backed by MongoDB.
  * 
- * @author Kevin Davis kdavis@hbr.org
+ * @author <a href="mailto:kdavis@hbr.org">Kevin Davis</a>
  *
  */
 public class MongoStore extends StoreBase {
@@ -63,7 +75,7 @@ public class MongoStore extends StoreBase {
 	/**
 	 * Default Name of the Collection where the Sessions will be stored. 
 	 */
-	protected static final String collectionName = "tomcat.sessions";
+	protected static final String sessionCollectionName = "tomcat.sessions";
 	
 	/**
      * The descriptive information about this implementation.
@@ -91,7 +103,7 @@ public class MongoStore extends StoreBase {
      * <a href="http://api.mongodb.org/java/current/com/mongodb/MongoClientURI.html">http://api.mongodb.org/java/current/com/mongodb/MongoClientURI.html</a>
      * @see MongoClientURI
      */
-    protected String dbConnectionUri;
+    protected String connectionUri;
     
     /**
      * MongoDB Hosts.  This can be a single host or a comma separated list
@@ -103,7 +115,7 @@ public class MongoStore extends StoreBase {
      * 	</pre>
      * </p> 
      */
-    protected String dbHosts;
+    protected String hosts;
     
     /**
      * Name of the MongoDB Database to use.
@@ -114,44 +126,44 @@ public class MongoStore extends StoreBase {
      * Name of the MongoDB Collection to store the sessions.
      * Defaults to <em>tomcat.sessions</em>
      */
-    protected String dbCollectionName = collectionName;
+    protected String collectionName = sessionCollectionName;
     
     /**
      * MongoDB User.  Used if MongoDB is in <em>Secure</em> mode.
      */
-    protected String dbUsername;
+    protected String username;
     
     /**
      * MongoDB password.  Used if MongoDB is in <em>Secure</em> mode
      */
-    protected String dbPassword;
+    protected String password;
     
     /**
      * Connection Timeout in milliseconds.  Defaults to 0, or no timeout
      */
-    protected int dbConnectionTimeoutMs = 0;
+    protected int connectionTimeoutMs = 0;
     
     /**
      * Connection Wait Timeout in milliseconds.  Defaults to 0, or no timeout
      */
-    protected int dbConnectionWaitTimeoutMs = 0;
+    protected int connectionWaitTimeoutMs = 0;
     
     /**
      * Minimum Number of connections the MongoClient will manage.
      * Defaults to 10.
      */
-    protected int dbMinPoolSize = 10;
+    protected int minPoolSize = 10;
     
     /**
      * Maximum Number of connections the MongoClient will manage.
      * Defaults to 20
      */
-    protected int dbMaxPoolSize = 20;
+    protected int maxPoolSize = 20;
     
     /**
      * MongoDB replica set name.
      */
-    protected String dbReplicaSet;
+    protected String replicaSet;
     
     /**
      * Controls if the MongoClient will use SSL.  Defaults to false.
@@ -174,7 +186,7 @@ public class MongoStore extends StoreBase {
      * Controls how long the sessions live in the DB.  
      * Defaults to -1 or forever
      */
-    protected int dbSessionTimeToLive = -1;
+    protected int timeToLive = -1;
 	
     /**
      * {@link MongoClient} instance to use.
@@ -427,7 +439,7 @@ public class MongoStore extends StoreBase {
 		super.destroyInternal();
 		
 		/* close the mongo client */
-		this.mongoClient.close();
+		this.mongoClient.close();		
 	}
 
 	/**
@@ -458,8 +470,8 @@ public class MongoStore extends StoreBase {
 	private void getConnection() throws LifecycleException {
 		try {
 			/* create our MongoClient */
-			if (this.dbConnectionUri != null) {
-				this.mongoClient = new MongoClient(this.dbConnectionUri);
+			if (this.connectionUri != null) {
+				this.mongoClient = new MongoClient(this.connectionUri);
 			} else {
 				/* create the client using the Mongo options */
 				ReadPreference readPreference = ReadPreference.primaryPreferred();
@@ -467,16 +479,16 @@ public class MongoStore extends StoreBase {
 					readPreference = ReadPreference.secondaryPreferred();
 				}
 				MongoClientOptions options = MongoClientOptions.builder()
-					.connectTimeout(dbConnectionTimeoutMs)
-					.maxWaitTime(dbConnectionWaitTimeoutMs)
-					.connectionsPerHost(dbMaxPoolSize)
+					.connectTimeout(connectionTimeoutMs)
+					.maxWaitTime(connectionWaitTimeoutMs)
+					.connectionsPerHost(maxPoolSize)
 					.writeConcern(writeConcern)
 					.readPreference(readPreference)
 					.build();
 				
 				/* build up the host list */
 				List<ServerAddress> hosts = new ArrayList<ServerAddress>();
-				String[] dbHosts = this.dbHosts.split(",");
+				String[] dbHosts = this.hosts.split(",");
 				for(String dbHost: dbHosts) {
 					String[] hostInfo = dbHost.split(":");
 					ServerAddress address = new ServerAddress(hostInfo[0], Integer.parseInt(hostInfo[1]));
@@ -490,14 +502,14 @@ public class MongoStore extends StoreBase {
 			this.db = this.mongoClient.getDB(this.dbName);
 			
 			/* see if we need to authenticate */
-			if (this.dbUsername != null || this.dbPassword != null) {
-				if (!this.db.authenticate(this.dbUsername, this.dbPassword.toCharArray())) {
+			if (this.username != null || this.password != null) {
+				if (!this.db.authenticate(this.username, this.password.toCharArray())) {
 					throw new RuntimeException("MongoDB Authentication Failed");
 				}
 			}
 			
 			/* get a reference to the collection */
-			this.collection = this.db.getCollection(this.dbCollectionName);
+			this.collection = this.db.getCollection(this.collectionName);
 			
 			/* drop any existing indexes */
 			this.collection.dropIndex(new BasicDBObject(lastModifiedProperty, 1));
@@ -507,10 +519,10 @@ public class MongoStore extends StoreBase {
 			this.collection.ensureIndex(new BasicDBObject(lastModifiedProperty, 1));
 			
 			/* determine if we need to expire our db sessions */
-			if (this.dbSessionTimeToLive != -1) {
+			if (this.timeToLive != -1) {
 				/* create a ttl index on the app property */
 				this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1), 
-						new BasicDBObject("expireAfterSeconds", this.dbSessionTimeToLive));	
+						new BasicDBObject("expireAfterSeconds", this.timeToLive));	
 			} else {
 				/* create a regular index */
 				this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1));
@@ -527,34 +539,34 @@ public class MongoStore extends StoreBase {
 
 
 	/**
-	 * @return the dbConnectionUri
+	 * @return the connectionUri
 	 */
-	public String getDbConnectionUri() {
-		return dbConnectionUri;
+	public String getConnectionUri() {
+		return connectionUri;
 	}
 
 
 	/**
-	 * @param dbConnectionUri the dbConnectionUri to set
+	 * @param connectionUri the connectionUri to set
 	 */
-	public void setDbConnectionUri(String dbConnectionUri) {
-		this.dbConnectionUri = dbConnectionUri;
+	public void setConnectionUri(String connectionUri) {
+		this.connectionUri = connectionUri;
 	}
 
 
 	/**
-	 * @return the dbHosts
+	 * @return the hosts
 	 */
-	public String getDbHosts() {
-		return dbHosts;
+	public String getHosts() {
+		return hosts;
 	}
 
 
 	/**
-	 * @param dbHosts the dbHosts to set
+	 * @param hosts the hosts to set
 	 */
-	public void setDbHosts(String dbHosts) {
-		this.dbHosts = dbHosts;
+	public void setHosts(String hosts) {
+		this.hosts = hosts;
 	}
 
 
@@ -575,130 +587,130 @@ public class MongoStore extends StoreBase {
 
 
 	/**
-	 * @return the dbCollectionName
+	 * @return the collectionName
 	 */
-	public String getDbCollectionName() {
-		return dbCollectionName;
+	public String getCollectionName() {
+		return collectionName;
 	}
 
 
 	/**
-	 * @param dbCollectionName the dbCollectionName to set
+	 * @param collectionName the collectionName to set
 	 */
-	public void setDbCollectionName(String dbCollectionName) {
-		this.dbCollectionName = dbCollectionName;
+	public void setCollectionName(String collectionName) {
+		this.collectionName = collectionName;
 	}
 
 
 	/**
-	 * @return the dbUsername
+	 * @return the username
 	 */
-	public String getDbUsername() {
-		return dbUsername;
+	public String getUsername() {
+		return username;
 	}
 
 
 	/**
-	 * @param dbUsername the dbUsername to set
+	 * @param username the username to set
 	 */
-	public void setDbUsername(String dbUsername) {
-		this.dbUsername = dbUsername;
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
 
 	/**
-	 * @return the dbPassword
+	 * @return the password
 	 */
-	public String getDbPassword() {
-		return dbPassword;
+	public String getPassword() {
+		return password;
 	}
 
 
 	/**
-	 * @param dbPassword the dbPassword to set
+	 * @param password the password to set
 	 */
-	public void setDbPassword(String dbPassword) {
-		this.dbPassword = dbPassword;
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 
 	/**
-	 * @return the dbConnectionTimeoutMs
+	 * @return the connectionTimeoutMs
 	 */
-	public int getDbConnectionTimeoutMs() {
-		return dbConnectionTimeoutMs;
+	public int getConnectionTimeoutMs() {
+		return connectionTimeoutMs;
 	}
 
 
 	/**
-	 * @param dbConnectionTimeoutMs the dbConnectionTimeoutMs to set
+	 * @param connectionTimeoutMs the connectionTimeoutMs to set
 	 */
-	public void setDbConnectionTimeoutMs(int dbConnectionTimeoutMs) {
-		this.dbConnectionTimeoutMs = dbConnectionTimeoutMs;
+	public void setConnectionTimeoutMs(int connectionTimeoutMs) {
+		this.connectionTimeoutMs = connectionTimeoutMs;
 	}
 
 
 	/**
-	 * @return the dbConnectionWaitTimeoutMs
+	 * @return the connectionWaitTimeoutMs
 	 */
-	public int getDbConnectionWaitTimeoutMs() {
-		return dbConnectionWaitTimeoutMs;
+	public int getConnectionWaitTimeoutMs() {
+		return connectionWaitTimeoutMs;
 	}
 
 
 	/**
-	 * @param dbConnectionWaitTimeoutMs the dbConnectionWaitTimeoutMs to set
+	 * @param connectionWaitTimeoutMs the connectionWaitTimeoutMs to set
 	 */
-	public void setDbConnectionWaitTimeoutMs(int dbConnectionWaitTimeoutMs) {
-		this.dbConnectionWaitTimeoutMs = dbConnectionWaitTimeoutMs;
+	public void setConnectionWaitTimeoutMs(int connectionWaitTimeoutMs) {
+		this.connectionWaitTimeoutMs = connectionWaitTimeoutMs;
 	}
 
 
 	/**
-	 * @return the dbMinPoolSize
+	 * @return the minPoolSize
 	 */
-	public int getDbMinPoolSize() {
-		return dbMinPoolSize;
+	public int getMinPoolSize() {
+		return minPoolSize;
 	}
 
 
 	/**
-	 * @param dbMinPoolSize the dbMinPoolSize to set
+	 * @param minPoolSize the minPoolSize to set
 	 */
-	public void setDbMinPoolSize(int dbMinPoolSize) {
-		this.dbMinPoolSize = dbMinPoolSize;
+	public void setMinPoolSize(int minPoolSize) {
+		this.minPoolSize = minPoolSize;
 	}
 
 
 	/**
-	 * @return the dbMaxPoolSize
+	 * @return the maxPoolSize
 	 */
-	public int getDbMaxPoolSize() {
-		return dbMaxPoolSize;
+	public int getMaxPoolSize() {
+		return maxPoolSize;
 	}
 
 
 	/**
-	 * @param dbMaxPoolSize the dbMaxPoolSize to set
+	 * @param maxPoolSize the maxPoolSize to set
 	 */
-	public void setDbMaxPoolSize(int dbMaxPoolSize) {
-		this.dbMaxPoolSize = dbMaxPoolSize;
+	public void setMaxPoolSize(int maxPoolSize) {
+		this.maxPoolSize = maxPoolSize;
 	}
 
 
 	/**
-	 * @return the dbReplicaSet
+	 * @return the replicaSet
 	 */
-	public String getDbReplicaSet() {
-		return dbReplicaSet;
+	public String getReplicaSet() {
+		return replicaSet;
 	}
 
 
 	/**
-	 * @param dbReplicaSet the dbReplicaSet to set
+	 * @param replicaSet the replicaSet to set
 	 */
-	public void setDbReplicaSet(String dbReplicaSet) {
-		this.dbReplicaSet = dbReplicaSet;
+	public void setReplicaSet(String replicaSet) {
+		this.replicaSet = replicaSet;
 	}
 
 
@@ -745,26 +757,23 @@ public class MongoStore extends StoreBase {
 	/**
 	 * @param writeConcern the writeConcern to set
 	 */
-	public void setWriteConcern(String writeConcern) {
-		WriteConcern concern = WriteConcern.valueOf(writeConcern);
-		if (concern != null) {
-			this.writeConcern = concern;
-		}
+	public void setWriteConcern(WriteConcern writeConcern) {
+		this.writeConcern = writeConcern;
 	}
 
 
 	/**
-	 * @return the dbSessionTimeToLive
+	 * @return the timeToLive
 	 */
-	public int getDbSessionTimeToLive() {
-		return dbSessionTimeToLive;
+	public int getTimeToLive() {
+		return timeToLive;
 	}
 
 
 	/**
-	 * @param dbSessionTimeToLive the dbSessionTimeToLive to set
+	 * @param timeToLive the timeToLive to set
 	 */
-	public void setDbSessionTimeToLive(int dbSessionTimeToLive) {
-		this.dbSessionTimeToLive = dbSessionTimeToLive;
+	public void setTimeToLive(int timeToLive) {
+		this.timeToLive = timeToLive;
 	}
 }

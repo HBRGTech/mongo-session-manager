@@ -5,7 +5,7 @@
 		<groupId>org.hbr</groupId>
 		<artifactId>mongo-session-manager</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
-	</parent>	
+	</parent>
 	<artifactId>mongo-session-store</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
@@ -49,8 +49,16 @@
 			<artifactId>tomcat-util</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-coyote</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
 		</dependency>
 	</dependencies>
 	<build>
@@ -62,6 +70,30 @@
 					<source>${maven.compiler.source}</source>
 					<target>${maven.compiler.target}</target>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.joelittlejohn.embedmongo</groupId>
+				<artifactId>embedmongo-maven-plugin</artifactId>
+				<version>0.1.12</version>
+				<executions>
+					<execution>
+						<id>start</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>start</goal>
+						</goals>
+						<configuration>
+							<databaseDirectory>${java.io.tmpdir}/sessiontest</databaseDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<id>stop</id>
+						<phase>test</phase>
+						<goals>
+							<goal>stop</goal>
+						</goals>
+					</execution>				
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

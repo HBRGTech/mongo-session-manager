@@ -110,6 +110,22 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>com.github.joelittlejohn.embedmongo</groupId>
+				<artifactId>embedmongo-maven-plugin</artifactId>
+				<version>0.1.12</version>
+				<executions>
+					<execution>
+						<id>start</id>
+						<goals>
+							<goal>start</goal>
+						</goals>
+						<configuration>
+							<databaseDirectory>${java.io.tmpdir}/sessiontest</databaseDirectory>
+						</configuration>
+					</execution>					
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.tomcat.maven</groupId>
 				<artifactId>tomcat7-maven-plugin</artifactId>
 				<configuration>
@@ -147,7 +163,7 @@
 						<version>0.0.1-SNAPSHOT</version>
 					</dependency>
 				</dependencies>
-			</plugin>
+			</plugin>			
 		</plugins>
 	</build>
 </project>

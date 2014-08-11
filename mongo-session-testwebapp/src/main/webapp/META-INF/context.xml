@@ -33,12 +33,10 @@
     <Manager className="org.hbr.session.manager.MongoPersistentManager"
     	distributable="true" maxIdleBackup="30">
     	<Store className="org.hbr.session.store.MongoStore"
-			dbHosts="ae-dev-mongo-db01.hbsp.harvard.edu:27017"
-			dbName="hbrg_dev"
-			dbMaxPoolSize="25"
-			dbUsername="hbrg_user"
-			dbPassword="endeajni"
-			dbSessionTimeToLive="86400"
+			hosts="localhost:27017"
+			dbName="sessiontest"
+			maxPoolSize="25"			
+			timeToLive="86400"
 		/>
     </Manager>
 
