@@ -31,20 +31,21 @@ Session Manager's are configured in Tomcat's `server.xml` or an application's `c
 
 Manager Properties.
 For more information regarding the MongoDB specific properties, please see the [MongoDB Documentation](http://docs.mongodb.org/manual/reference/connection-string/).  *bold* properties are required.
-| Attribute | Description |
-| --------- | ----------- |
-| connectionUri | A MongoDB Connection String.  If present, this will override all other connection options|
-| *hosts* | A comma separated list of MongoDB hosts and ports in `host:port` syntax |
-| *dbName* | MongoDB Database name to use |
-| collectionName | Name of the Collection to use.  Defaults to **tomcat.sessions** |
-| username | If MongoDB is operating in Secure Mode, the username to authenticate with |
-| password | If MongoDB is operating in Secure Mode, the password to authenticate with |
-| connectionTimeoutMs | MongoDB Connection Timeout in Milliseconds.  Defaults to 0 or no timeout |
-| connectionWaitTimeoutMs | MongoDB Wait Timeout in Milliseconds.  Controls how long the `MongoClient` waits for a free connection.  Defaults to 0 or no timeout |
-| minPoolSize | Minimum Number of MongoDB Connections for this manager.  Defaults to 10 |
-| maxPoolSize | Maximum Number of MongoDB Connections for this manager.  Defaults to 25 |
-| replicaSet | Name of the MongoDB Replica Set |
-| timeToLive | Time to Live, in seconds, for Session Data persisted to MongoDB.  Defaults to 86400 or 24 hours |
+
+ Attribute | Description |
+ --------- | ----------- |
+ connectionUri | A MongoDB Connection String.  If present, this will override all other connection options
+ *hosts* | A comma separated list of MongoDB hosts and ports in `host:port` syntax 
+ *dbName* | MongoDB Database name to use 
+ collectionName | Name of the Collection to use.  Defaults to **tomcat.sessions** 
+ username | If MongoDB is operating in Secure Mode, the username to authenticate with 
+ password | If MongoDB is operating in Secure Mode, the password to authenticate with 
+ connectionTimeoutMs | MongoDB Connection Timeout in Milliseconds.  Defaults to 0 or no timeout 
+ connectionWaitTimeoutMs | MongoDB Wait Timeout in Milliseconds.  Controls how long the `MongoClient` waits for a free connection.  Defaults to 0 or no timeout 
+ minPoolSize | Minimum Number of MongoDB Connections for this manager.  Defaults to 10 
+ maxPoolSize | Maximum Number of MongoDB Connections for this manager.  Defaults to 25 
+ replicaSet | Name of the MongoDB Replica Set 
+ timeToLive | Time to Live, in seconds, for Session Data persisted to MongoDB.  Defaults to 86400 or 24 hours 
 
 
 # Architecture
