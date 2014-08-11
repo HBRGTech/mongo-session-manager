@@ -305,6 +305,7 @@ public class MongoStore extends StoreBase {
 					/* create a new session */
 					session = (StandardSession)this.manager.createEmptySession();
 					session.readObjectData(ois);
+					session.setManager(this.manager);
 				} finally {
 					if (ois != null) {
 						try {
@@ -385,7 +386,7 @@ public class MongoStore extends StoreBase {
 		
 		/* create the DBObject */
 		BasicDBObject mongoSession = new BasicDBObject();
-		mongoSession.put("_id", session.getId());
+		mongoSession.put("_id", session.getIdInternal());
 		mongoSession.put(appContextProperty, this.getName());
 		mongoSession.put(creationTimeProperty, session.getCreationTime());
 		mongoSession.put(sessionDataProperty, data);
