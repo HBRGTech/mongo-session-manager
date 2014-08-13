@@ -49,10 +49,6 @@ For more information regarding the MongoDB specific properties, please see the [
  maxPoolSize | Maximum Number of MongoDB Connections for this manager.  Defaults to 25 
  replicaSet | Name of the MongoDB Replica Set 
 
-
-# Architecture
-The manager is made up of two components, `org.hbr.session.manager.MongoPersistentManager` and `org.hbr.session.store.MongoStore`.  The `MongoPersistentManager` is responsible for configuring the Session Manager. `MongoStore` handles the interactions with MongoDB, via a `MongoClient` instance, and is responsible for the various session management operations.  Serialization of session data is handled using an `java.io.ObjectOutputStream`.
-
 ## API Docs
 API Docs are available here:
 
