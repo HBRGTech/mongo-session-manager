@@ -23,8 +23,7 @@ Session Manager's are configured in Tomcat's `server.xml` or an application's `c
 	<Store className="org.hbr.session.store.MongoStore"
 		hosts="localhost:27017"
 		dbName="sessiontest"
-		maxPoolSize="25"			
-		timeToLive="86400"
+		maxPoolSize="25"
 	/>
 </Manager>
 ```
@@ -46,7 +45,6 @@ For more information regarding the MongoDB specific properties, please see the [
  minPoolSize | Minimum Number of MongoDB Connections for this manager.  Defaults to 10 
  maxPoolSize | Maximum Number of MongoDB Connections for this manager.  Defaults to 25 
  replicaSet | Name of the MongoDB Replica Set 
- timeToLive | Time to Live, in seconds, for Session Data persisted to MongoDB.  Defaults to 86400 or 24 hours 
 
 
 # Architecture
