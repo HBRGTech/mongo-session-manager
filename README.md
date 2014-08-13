@@ -3,7 +3,7 @@ Tomcat MongoDB Persistent Session Manager
 
 # Overview
 
-This is an Apache Tomcat Persistent Session Manager implementation backed by MongoDB.  This work borrows heavily from the concepts laid out in the [Mongo-Tomcat-Sessions project by David Dawson](https://github.com/naviance/Mongo-Tomcat-Sessions) and applies them using Tomcat's `org.apache.catalina.session.PersistencManager` and `org.apache.catalina.Store` interfaces.
+This is an Apache Tomcat Persistent Session Manager implementation backed by MongoDB.  This work borrows heavily from the concepts laid out in the [Mongo-Tomcat-Sessions project by David Dawson](https://github.com/naviance/Mongo-Tomcat-Sessions) and applies them using Tomcat's `org.apache.catalina.session.PersistenceManager` and `org.apache.catalina.Store` interfaces.
 
 ## Quick Start
 
@@ -14,6 +14,9 @@ This is an Apache Tomcat Persistent Session Manager implementation backed by Mon
 *  MongoDB Driver 2.11 or higher (tested with MongoDB Driver 2.11.4)
 
 ### Usage
+
+* Copy the `mongo-session-manager.jar` and the MongoDB Driver into the `/lib` directory of your Tomcat installation.
+* Configure the session manager:
 
 Session Manager's are configured in Tomcat's `server.xml` or an application's `context.xml`.  The `MongoPersistentManager` supports all of the `PersistentManager` attributes.  For more information, please see the [Tomcat Documentation](http://tomcat.apache.org/tomcat-7.0-doc/config/manager.html)
 
