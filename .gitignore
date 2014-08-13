@@ -1,0 +1,6 @@
+*.project
+*.prefs
+*.classpath
+.settings
+target/
+.springBeans
