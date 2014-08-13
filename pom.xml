@@ -3,7 +3,7 @@
 
 	<groupId>org.hbr</groupId>
 	<artifactId>mongo-session-manager</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>MongoDB Tomcat Session Manager</name>
@@ -139,34 +139,7 @@
 					<version>2.2</version>
 				</plugin>
 			</plugins>
-		</pluginManagement>
-		<plugins>
-			<plugin>
-				<groupId>com.github.github</groupId>
-				<artifactId>site-maven-plugin</artifactId>
-				<version>0.9</version>
-				<configuration>
-					<message>Maven artifacts for ${project.version}</message>
-					<noJekyll>true</noJekyll>
-					<outputDirectory>${project.build.directory}/mvn-repo</outputDirectory>
-					<branch>refs/heads/mvn-repo</branch>
-					<includes>
-						<include>**/*</include>
-					</includes>
-					<repositoryName>mongo-session-manager</repositoryName>
-				</configuration>
-				<executions>
-					<!-- run site-maven-plugin's 'site' target as part of the build's normal 
-						'deploy' phase -->
-					<execution>
-						<goals>
-							<goal>site</goal>
-						</goals>
-						<phase>deploy</phase>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
+		</pluginManagement>		
 	</build>
 	<modules>
 		<module>mongo-session-store</module>

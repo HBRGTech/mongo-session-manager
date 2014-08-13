@@ -3,10 +3,10 @@
 	<parent>
 		<groupId>org.hbr</groupId>
 		<artifactId>mongo-session-manager</artifactId>
-		<version>0.0.2-SNAPSHOT</version>
+		<version>0.0.3-SNAPSHOT</version>
 	</parent>
 	<artifactId>mongo-session-store</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>MongoDB Session Manager Store</name>
