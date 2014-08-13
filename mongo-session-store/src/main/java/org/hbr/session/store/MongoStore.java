@@ -15,6 +15,7 @@
  */
 package org.hbr.session.store;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,10 +27,12 @@ import java.util.List;
 
 import org.apache.catalina.Container;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.Loader;
 import org.apache.catalina.Session;
 import org.apache.catalina.Store;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.StoreBase;
+import org.apache.catalina.util.CustomObjectInputStream;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -183,12 +186,6 @@ public class MongoStore extends StoreBase {
     protected WriteConcern writeConcern = WriteConcern.SAFE;
     
     /**
-     * Controls how long the sessions live in the DB.  
-     * Defaults to -1 or forever
-     */
-    protected int timeToLive = -1;
-	
-    /**
      * {@link MongoClient} instance to use.
      */
     protected MongoClient mongoClient;
@@ -283,6 +280,15 @@ public class MongoStore extends StoreBase {
 		/* default session */
 		StandardSession session = null;
 		
+		/* get a reference to the container */
+		Container container = manager.getContainer();
+		
+		/* store a reference to the old class loader, as we will change this thread's
+		 * current context if we need to load custom classes
+		 */
+		ClassLoader managerContextLoader = Thread.currentThread().getContextClassLoader();
+		ClassLoader appContextLoader = null;
+		
 		/* locate the session, by id, in the collection */
 		BasicDBObject sessionQuery = new BasicDBObject();
 		sessionQuery.put("_id", id);
@@ -295,12 +301,33 @@ public class MongoStore extends StoreBase {
 			byte[] data = (byte[])mongoSession.get(sessionDataProperty);
 			
 			if (data != null) {
-				ByteArrayInputStream bis = null;
+				BufferedInputStream bis = null;
 				ObjectInputStream ois = null;
 				try {
-					/* load the data into an input stream */
-					bis = new ByteArrayInputStream(data);
-					ois = new ObjectInputStream(bis);
+					/* load the data into an input stream */					
+					bis = new BufferedInputStream(new ByteArrayInputStream(data));					
+					
+					/* determine which class loader to use when reading the object */
+					Loader loader = null;
+					if (container != null) {
+						loader = container.getLoader();
+						if (loader != null) {
+							/* get the class loader for the container */
+							appContextLoader = loader.getClassLoader();
+							
+							/* update the thread's class loader before reading the 
+							 * object
+							 */
+							Thread.currentThread().setContextClassLoader(appContextLoader);
+
+							/* use a custom object stream to read our object */
+                            ois = new CustomObjectInputStream(bis,
+                            		appContextLoader);
+						} else {
+							/* regular input stream */
+							ois = new ObjectInputStream(bis);
+						}
+					}
 					
 					/* create a new session */
 					session = (StandardSession)this.manager.createEmptySession();
@@ -319,6 +346,9 @@ public class MongoStore extends StoreBase {
 							bis = null;
 						} catch (Exception e) {}
 					}
+					
+					/* restore the class loader */
+					Thread.currentThread().setContextClassLoader(managerContextLoader);
 				}
 			}
 		}
@@ -383,6 +413,12 @@ public class MongoStore extends StoreBase {
 		
 		/* get the byte array of the data */
 		byte[] data = bos.toByteArray();
+		
+		/* close the streams */
+		try {
+			oos.close();
+			oos = null;
+		} catch (Exception e) {}
 		
 		/* create the DBObject */
 		BasicDBObject mongoSession = new BasicDBObject();
@@ -520,10 +556,10 @@ public class MongoStore extends StoreBase {
 			this.collection.ensureIndex(new BasicDBObject(lastModifiedProperty, 1));
 			
 			/* determine if we need to expire our db sessions */
-			if (this.timeToLive != -1) {
+			if (this.manager.getMaxInactiveInterval() != -1) {
 				/* create a ttl index on the app property */
 				this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1), 
-						new BasicDBObject("expireAfterSeconds", this.timeToLive));	
+						new BasicDBObject("expireAfterSeconds", this.manager.getMaxInactiveInterval()));	
 			} else {
 				/* create a regular index */
 				this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1));
@@ -760,21 +796,5 @@ public class MongoStore extends StoreBase {
 	 */
 	public void setWriteConcern(WriteConcern writeConcern) {
 		this.writeConcern = writeConcern;
-	}
-
-
-	/**
-	 * @return the timeToLive
-	 */
-	public int getTimeToLive() {
-		return timeToLive;
-	}
-
-
-	/**
-	 * @param timeToLive the timeToLive to set
-	 */
-	public void setTimeToLive(int timeToLive) {
-		this.timeToLive = timeToLive;
-	}
+	}	
 }
