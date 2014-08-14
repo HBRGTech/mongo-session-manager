@@ -23,6 +23,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import org.apache.catalina.Container;
@@ -84,21 +85,21 @@ public class MongoStore extends StoreBase {
      * The descriptive information about this implementation.
      */
     protected static final String info = "MongoStore/1.0";
-
-    /**
-     * Context or Web Application name associated with this Store
-     */
-    private String name = null;
-
+    
     /**
      * Name to register for this Store, used for logging.
      */
     protected static String storeName = "MongoStore";
 
     /**
+     * Context or Web Application name associated with this Store
+     */
+    private String name = null;  
+
+    /**
      * Name to register for the background thread.
      */
-    protected String threadName = "MongoStore";
+    protected String threadName = "MongoStore";   
     
     /**
      * MongoDB Connection URI.  This will override all other connection settings
@@ -167,6 +168,11 @@ public class MongoStore extends StoreBase {
      * MongoDB replica set name.
      */
     protected String replicaSet;
+    
+    /**
+     * Time to Live for the data in Mongo
+     */
+    protected int timeToLive = -1;
     
     /**
      * Controls if the MongoClient will use SSL.  Defaults to false.
@@ -426,7 +432,7 @@ public class MongoStore extends StoreBase {
 		mongoSession.put(appContextProperty, this.getName());
 		mongoSession.put(creationTimeProperty, session.getCreationTime());
 		mongoSession.put(sessionDataProperty, data);
-		mongoSession.put(lastModifiedProperty, System.currentTimeMillis());
+		mongoSession.put(lastModifiedProperty, Calendar.getInstance().getTime());
 		
 		/* create our upsert lookup */
 		BasicDBObject sessionQuery = new BasicDBObject();
@@ -501,6 +507,14 @@ public class MongoStore extends StoreBase {
 	}
 
 	/**
+     * Return the name for this Store, used for logging.
+     */
+    @Override
+    public String getStoreName() {
+        return (storeName);
+    }
+	
+	/**
 	 * Create the {@link MongoClient}.
 	 * @throws LifecycleException
 	 */
@@ -508,6 +522,7 @@ public class MongoStore extends StoreBase {
 		try {
 			/* create our MongoClient */
 			if (this.connectionUri != null) {
+				manager.getContainer().getLogger().info(getStoreName() + "[" + this.getName() + "]: Connecting to MongoDB [" + this.connectionUri + "]");
 				this.mongoClient = new MongoClient(this.connectionUri);
 			} else {
 				/* create the client using the Mongo options */
@@ -531,40 +546,54 @@ public class MongoStore extends StoreBase {
 					ServerAddress address = new ServerAddress(hostInfo[0], Integer.parseInt(hostInfo[1]));
 					hosts.add(address);
 				}
+				
+				this.manager.getContainer().getLogger().info(getStoreName() + "[" + this.getName() + "]: Connecting to MongoDB [" + this.hosts + "]");
+				
 				/* connect */				
 				this.mongoClient = new MongoClient(hosts, options);
 			}
 			
 			/* get a connection to our db */
+			this.manager.getContainer().getLogger().info(getStoreName() + "[" + this.getName() + "]: Using Database [" + this.dbName + "]");
 			this.db = this.mongoClient.getDB(this.dbName);
 			
 			/* see if we need to authenticate */
 			if (this.username != null || this.password != null) {
+				this.manager.getContainer().getLogger().info(getStoreName() + "[" + this.getName() + "]: Authenticating using [" + this.username + "]");
 				if (!this.db.authenticate(this.username, this.password.toCharArray())) {
 					throw new RuntimeException("MongoDB Authentication Failed");
 				}
 			}
 			
 			/* get a reference to the collection */
-			this.collection = this.db.getCollection(this.collectionName);
+			this.collection = this.db.getCollection(this.collectionName);			
+			this.manager.getContainer().getLogger().info(getStoreName() + "[" + this.getName() + "]: Preparing indexes");
 			
 			/* drop any existing indexes */
 			this.collection.dropIndex(new BasicDBObject(lastModifiedProperty, 1));
 			this.collection.dropIndex(new BasicDBObject(appContextProperty, 1));
 			
-			/* make sure the last modified and app name indexes exists */
-			this.collection.ensureIndex(new BasicDBObject(lastModifiedProperty, 1));
+			/* make sure the last modified and app name indexes exists */			
+			this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1));
 			
 			/* determine if we need to expire our db sessions */
-			if (this.manager.getMaxInactiveInterval() != -1) {
-				/* create a ttl index on the app property */
-				this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1), 
-						new BasicDBObject("expireAfterSeconds", this.manager.getMaxInactiveInterval()));	
+			if (this.timeToLive != -1) {
+				/* use the time to live set */
+				this.collection.ensureIndex(new BasicDBObject(lastModifiedProperty, 1), 
+						new BasicDBObject("lastModifiedProperty", this.timeToLive));	
 			} else {
-				/* create a regular index */
-				this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1));
+				/* no custom time to live specified, use the manager's settings */
+				if (this.manager.getMaxInactiveInterval() != -1) {
+					/* create a ttl index on the app property */
+					this.collection.ensureIndex(new BasicDBObject(lastModifiedProperty, 1), 
+							new BasicDBObject("lastModifiedProperty", this.manager.getMaxInactiveInterval()));	
+				} else {
+					/* create a regular index */
+					this.collection.ensureIndex(new BasicDBObject(lastModifiedProperty, 1));
+				}
 			}
 			
+			this.manager.getContainer().getLogger().info(getStoreName() + "[" + this.getName() + "]: Store ready.");
 		} catch (UnknownHostException uhe) {
 			this.manager.getContainer().getLogger().error("Unable to Connect to MongoDB", uhe);
 			throw new LifecycleException(uhe);
@@ -796,5 +825,21 @@ public class MongoStore extends StoreBase {
 	 */
 	public void setWriteConcern(WriteConcern writeConcern) {
 		this.writeConcern = writeConcern;
+	}
+
+
+	/**
+	 * @return the timeToLive
+	 */
+	public int getTimeToLive() {
+		return timeToLive;
+	}
+
+
+	/**
+	 * @param timeToLive the timeToLive to set
+	 */
+	public void setTimeToLive(int timeToLive) {
+		this.timeToLive = timeToLive;
 	}	
 }

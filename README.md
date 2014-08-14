@@ -48,6 +48,7 @@ For more information regarding the MongoDB specific properties, please see the [
  minPoolSize | Minimum Number of MongoDB Connections for this manager.  Defaults to 10 
  maxPoolSize | Maximum Number of MongoDB Connections for this manager.  Defaults to 25 
  replicaSet | Name of the MongoDB Replica Set 
+ timeToLive | Amount of time, in seconds, to keep the session in the Collection before it is purged.  Defaults to the manager maxInactiveInterval setting.
 
 ## API Docs
 API Docs are available here:

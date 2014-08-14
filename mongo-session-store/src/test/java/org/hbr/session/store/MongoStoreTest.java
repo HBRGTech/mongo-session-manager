@@ -58,6 +58,8 @@ public class MongoStoreTest {
 		this.manager.setContainer(new StandardContext());
 		this.manager.getContainer().setName("test");
 		this.manager.getContainer().setParent(new StandardEngine());
+		this.manager.getContainer().getParent().setName("parent");
+		
 		
 		/* create the store */
 		this.mongoStore = new MongoStore();
