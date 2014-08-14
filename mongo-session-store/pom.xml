@@ -3,10 +3,10 @@
 	<parent>
 		<groupId>org.hbr</groupId>
 		<artifactId>mongo-session-manager</artifactId>
-		<version>0.0.7</version>
+		<version>0.0.7-SNAPSHOT</version>
 	</parent>
 	<artifactId>mongo-session-store</artifactId>
-	<version>0.0.7</version>
+	<version>0.0.7-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>MongoDB Session Manager Store</name>
@@ -16,7 +16,7 @@
 		<connection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-store.git</connection>
 		<developerConnection>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-store.git</developerConnection>
 		<url>scm:git:git@github.com:HBRGTech/mongo-session-manager/mongo-session-manager.git</url>
-	  <tag>mongo-session-manager-0.0.7</tag>
+	  <tag>HEAD</tag>
   </scm>
 	<issueManagement>
 		<url>https://github.com/HBRGTech/mongo-session-manager/issues</url>
