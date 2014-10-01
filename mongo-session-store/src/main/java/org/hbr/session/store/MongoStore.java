@@ -570,8 +570,12 @@ public class MongoStore extends StoreBase {
 			this.manager.getContainer().getLogger().info(getStoreName() + "[" + this.getName() + "]: Preparing indexes");
 			
 			/* drop any existing indexes */
-			this.collection.dropIndex(new BasicDBObject(lastModifiedProperty, 1));
-			this.collection.dropIndex(new BasicDBObject(appContextProperty, 1));
+			try {
+				this.collection.dropIndex(new BasicDBObject(lastModifiedProperty, 1));
+				this.collection.dropIndex(new BasicDBObject(appContextProperty, 1));
+			} catch (Exception e) {
+				/* these indexes may not exist, so ignore */
+			}
 			
 			/* make sure the last modified and app name indexes exists */			
 			this.collection.ensureIndex(new BasicDBObject(appContextProperty, 1));
